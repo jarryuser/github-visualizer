@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub Activity Visualizer</title>
+  <link rel="stylesheet" href="/styles/main.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ── Header ───────────────────────────────────────────────────────────── -->
+    <header class="header">
+      <span class="header-logo">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        GitHub Visualizer
+      </span>
+
+      <form id="search-form">
+        <input
+          id="username-input"
+          type="text"
+          placeholder="Enter GitHub username…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="btn-search" type="submit">View profile</button>
+      </form>
+    </header>
+
+    <!-- ── Error ─────────────────────────────────────────────────────────────── -->
+    <div id="error-box" role="alert"></div>
+
+    <!-- ── Loading ───────────────────────────────────────────────────────────── -->
+    <div id="loading" aria-live="polite">
+      <div class="spinner"></div>
+      <span>Loading profile…</span>
+    </div>
+
+    <!-- ── Dashboard ─────────────────────────────────────────────────────────── -->
+    <main id="dashboard">
+
+      <!-- Profile -->
+      <div class="profile">
+        <img id="avatar" src="" alt="User avatar" />
+        <div class="profile-info">
+          <p id="profile-name"></p>
+          <p id="profile-bio"></p>
+          <p id="profile-location">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A31.493 31.493 0 018 14.58a31.481 31.481 0 01-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0110 0c0 .862-.305 1.867-.834 2.94zM8 16s6-5.686 6-10A6 6 0 002 6c0 4.314 6 10 6 10z"/>
+              <path d="M8 8a2 2 0 110-4 2 2 0 010 4z"/>
+            </svg>
+            <span></span>
+          </p>
+          <a id="profile-link" href="#" target="_blank" rel="noopener"></a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Repositories</div>
+          <div class="stat-value" id="stat-repos">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total stars</div>
+          <div class="stat-value" id="stat-stars">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Followers</div>
+          <div class="stat-value" id="stat-followers">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Current streak</div>
+          <div class="stat-value" id="stat-streak">—</div>
+        </div>
+      </div>
+
+      <!-- Streak graph -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M1.5 1.75V13.5h13.75a.75.75 0 010 1.5H.75a.75.75 0 01-.75-.75V1.75a.75.75 0 011.5 0z"/>
+            <path d="M5.5 11.5a.75.75 0 01-.75-.75V9.62a.75.75 0 011.5 0v1.13a.75.75 0 01-.75.75zm2.5 0a.75.75 0 01-.75-.75V7.12a.75.75 0 011.5 0v3.63a.75.75 0 01-.75.75zm2.5 0a.75.75 0 01-.75-.75V4.62a.75.75 0 011.5 0v6.13a.75.75 0 01-.75.75zm2.5 0a.75.75 0 01-.75-.75V2.12a.75.75 0 011.5 0v8.63a.75.75 0 01-.75.75z"/>
+          </svg>
+          Contribution activity — last 12 months
+        </div>
+        <div id="streak-container"></div>
+      </div>
+
+      <!-- Languages + Repos -->
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9zm10.5-1V9h-8c-.356 0-.694.074-1 .208V2.5a1 1 0 011-1h8z"/>
+            </svg>
+            Languages
+          </div>
+          <div id="lang-container"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.751.751 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
+            </svg>
+            Top repositories
+          </div>
+          <div id="repos-container"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
