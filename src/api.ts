@@ -38,36 +38,47 @@ export interface Contribution {
 
 // ── Base fetch ─────────────────────────────────────────────────────────────────
 
-const BASE = 'https://api.github.com';
-
-const TOKEN = import.meta.env.VITE_GITHUB_TOKEN as string | undefined;
-
-function ghFetch(path: string): Promise<Response> {
-  const headers: Record<string, string> = {
-    'Accept': 'application/vnd.github.v3+json',
-  };
-  if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
-  return fetch(`${BASE}${path}`, { headers });
-}
+/**
+ * All GitHub API requests go through the Cloudflare Worker proxy.
+ * The token lives there as a secret — it never reaches the browser.
+ *
+ * Local dev:  set VITE_PROXY_URL=http://localhost:8787 in .env
+ * Production: Worker is deployed at the URL below automatically.
+ */
+const PROXY_BASE =
+  import.meta.env.VITE_PROXY_URL ??
+  'https://github-visualizer-proxy.jarryuser.workers.dev';
 
 async function ghJson<T>(path: string): Promise<T> {
-  const res = await ghFetch(path);
+  const res = await fetch(`${PROXY_BASE}${path}`);
   if (res.status === 404) throw new Error('User not found');
-  if (res.status === 403) throw new Error('API rate limit exceeded. Add a GitHub token in .env');
+  if (res.status === 403) throw new Error('API rate limit exceeded');
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
   return res.json();
 }
 
 // ── Endpoints ──────────────────────────────────────────────────────────────────
 
+/**
+ * GET /users/{username}
+ * Профиль: имя, аватар, bio, кол-во репозиториев, фолловеры.
+ */
 export async function fetchUser(username: string): Promise<GithubUser> {
   return ghJson<GithubUser>(`/users/${username}`);
 }
 
+/**
+ * GET /users/{username}/repos?per_page=100&sort=updated
+ * Все публичные репозитории пользователя.
+ */
 export async function fetchRepos(username: string): Promise<GithubRepo[]> {
   return ghJson<GithubRepo[]>(`/users/${username}/repos?per_page=100&sort=updated`);
 }
 
+/**
+ * GET /repos/{username}/{repo}/languages
+ * Байты кода по языкам для одного репозитория.
+ */
 async function fetchRepoLanguages(
   username: string,
   repo: string
@@ -75,6 +86,10 @@ async function fetchRepoLanguages(
   return ghJson<Record<string, number>>(`/repos/${username}/${repo}/languages`);
 }
 
+/**
+ * Суммирует языки по всем (не-форк) репозиториям и возвращает топ-6
+ * в процентах. Ограничиваем 20 репо чтобы не перегружать Worker.
+ */
 export async function fetchAllLanguages(
   username: string,
   repos: GithubRepo[]
@@ -105,6 +120,9 @@ export async function fetchAllLanguages(
     .slice(0, 6);
 }
 
+/**
+ * Contributions via third-party proxy (no token needed — public data).
+ */
 export async function fetchContributions(
   username: string
 ): Promise<Contribution[]> {
