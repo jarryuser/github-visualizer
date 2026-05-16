@@ -138,7 +138,7 @@ function renderStatRows(a: ProfileData, b: ProfileData): string {
     { label: 'Current streak', valA: a.streak,             valB: b.streak, suffix: 'd' },
   ];
 
-  const rowsHtml = rows.map(row => statRow(row, a.user.login, b.user.login)).join('');
+  const rowsHtml = rows.map(row => statRow(row)).join('');
 
   return `
     <div class="card" style="margin-bottom:14px">
