@@ -160,7 +160,7 @@ function renderStatRows(a: ProfileData, b: ProfileData): string {
   `;
 }
 
-function statRow(row: StatRow, loginA: string, loginB: string): string {
+function statRow(row: StatRow): string {
   const higher = row.higherIsBetter ?? true;
   const aWins  = higher ? row.valA > row.valB : row.valA < row.valB;
   const bWins  = higher ? row.valB > row.valA : row.valB < row.valA;
