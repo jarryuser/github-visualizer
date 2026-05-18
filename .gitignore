@@ -2,3 +2,10 @@ dist/
 node_modules/
 node_modules/.cache
 .DS_Store
+
+# secrets & local config
+.env
+.env.local
+.env.*.local
+.dev.vars
+.wrangler/
