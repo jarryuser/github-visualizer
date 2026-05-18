@@ -6,12 +6,17 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy",
+    "worker:secret": "wrangler secret put GITHUB_TOKEN",
+    "worker:typecheck": "tsc -p tsconfig.worker.json --noEmit"
   },
   "dependencies": {
     "d3": "^7.9.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260518.1",
     "@types/d3": "^7.4.3",
     "gh-pages": "^6.1.1",
     "typescript": "^5.3.3",

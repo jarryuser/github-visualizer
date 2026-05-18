@@ -1,5 +1,11 @@
-name       = "github-visualizer-proxy"
-main       = "worker/index.ts"
+name               = "github-visualizer-proxy"
+main               = "worker/index.ts"
 compatibility_date = "2024-01-01"
-workers_dev = true
+workers_dev        = true
 
+# KV namespace for caching GitHub API responses.
+# Create once with:    npx wrangler kv:namespace create CACHE
+# Then paste the returned id below, replacing the placeholder.
+[[kv_namespaces]]
+binding = "CACHE"
+id      = "1a426a2cf49a49b795d983389703fddb"

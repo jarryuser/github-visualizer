@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker — GitHub API proxy.
+ * Cloudflare Worker — GitHub API proxy with KV cache.
  *
  * Sits between the browser and GitHub API.
  * The token never reaches the client — it lives here as a secret.
@@ -9,31 +9,48 @@
  *   GET /users/:username/repos
  *   GET /repos/:username/:repo/languages
  *
+ * Caching:
+ *   - First request for a path goes to GitHub and stores the response in KV.
+ *   - Subsequent requests within TTL are served from KV (no GitHub call).
+ *   - TTL differs per route — see ROUTE_TTL below.
+ *   - Add ?fresh=1 to any request to bypass the cache (forced refresh).
+ *
  * Deploy:
- *   npx wrangler secret put GITHUB_TOKEN   ← paste token once
+ *   npx wrangler kv:namespace create CACHE   ← once, paste id into wrangler.toml
+ *   npx wrangler secret put GITHUB_TOKEN     ← once, paste your PAT
  *   npx wrangler deploy
  */
 
 export interface Env {
-  GITHUB_TOKEN: string;  // set via: npx wrangler secret put GITHUB_TOKEN
+  GITHUB_TOKEN: string;     // set via: npx wrangler secret put GITHUB_TOKEN
+  CACHE: KVNamespace;       // KV namespace bound in wrangler.toml
 }
 
-const GITHUB_BASE  = 'https://api.github.com';
+const GITHUB_BASE = 'https://api.github.com';
+
 const ALLOWED_ORIGINS = [
-  'https://jarryuser.github.io',  // GitHub Pages
-  'http://localhost:5173',         // local dev
-  'http://localhost:4173',         // vite preview
+  'https://jarryuser.github.io', // GitHub Pages
+  'http://localhost:5173',       // local dev
+  'http://localhost:4173',       // vite preview
 ];
 
-// Routes the Worker is allowed to proxy — anything else is blocked
-const ALLOWED_PATTERNS = [
-  /^\/users\/[^/]+$/,                    // GET /users/:username
-  /^\/users\/[^/]+\/repos$/,             // GET /users/:username/repos
-  /^\/repos\/[^/]+\/[^/]+\/languages$/, // GET /repos/:u/:repo/languages
+// Routes the Worker is allowed to proxy + cache TTL (seconds).
+// Languages change rarely → cache long. User/repos change more often → short.
+const ROUTE_TTL: Array<{ pattern: RegExp; ttl: number }> = [
+  { pattern: /^\/users\/[^/]+$/,                    ttl: 600  },  // 10 min
+  { pattern: /^\/users\/[^/]+\/repos$/,             ttl: 600  },  // 10 min
+  { pattern: /^\/repos\/[^/]+\/[^/]+\/languages$/,  ttl: 3600 },  // 60 min
 ];
+
+function matchRoute(pathname: string): { ttl: number } | null {
+  for (const { pattern, ttl } of ROUTE_TTL) {
+    if (pattern.test(pathname)) return { ttl };
+  }
+  return null;
+}
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url    = new URL(request.url);
     const origin = request.headers.get('Origin') ?? '';
 
@@ -45,22 +62,37 @@ export default {
     // ── Only GET ────────────────────────────────────────────────────────────
     if (request.method !== 'GET') {
       return corsResponse(
-        new Response('Method not allowed', { status: 405 }), origin
+        new Response('Method not allowed', { status: 405 }), origin,
       );
     }
 
     // ── Path allowlist ──────────────────────────────────────────────────────
-    const path = url.pathname + url.search;   // e.g. /users/jarryuser/repos?per_page=100
-
-    const allowed = ALLOWED_PATTERNS.some(re => re.test(url.pathname));
-    if (!allowed) {
+    const route = matchRoute(url.pathname);
+    if (!route) {
       return corsResponse(
-        new Response('Not found', { status: 404 }), origin
+        new Response('Not found', { status: 404 }), origin,
       );
     }
 
-    // ── Proxy to GitHub ─────────────────────────────────────────────────────
-    const ghUrl = `${GITHUB_BASE}${path}`;
+    // ── KV cache lookup ─────────────────────────────────────────────────────
+    const cacheKey = url.pathname + url.search.replace(/[?&]fresh=1/, '');
+    const fresh    = url.searchParams.get('fresh') === '1';
+
+    if (!fresh) {
+      const hit = await env.CACHE.get(cacheKey);
+      if (hit !== null) {
+        return corsResponse(
+          new Response(hit, {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' },
+          }),
+          origin,
+        );
+      }
+    }
+
+    // ── Miss → fetch from GitHub ────────────────────────────────────────────
+    const ghUrl = `${GITHUB_BASE}${url.pathname}${url.search.replace(/[?&]fresh=1/, '')}`;
 
     const ghResponse = await fetch(ghUrl, {
       headers: {
@@ -70,16 +102,26 @@ export default {
       },
     });
 
-    // Forward response body and status, add CORS headers
-    const body    = await ghResponse.text();
-    const headers = new Headers({
-      'Content-Type':  'application/json',
-      'Cache-Control': 's-maxage=60',   // cache 60s at Cloudflare edge
-    });
+    const body = await ghResponse.text();
+
+    // Store only successful responses, and do it after returning so the
+    // caller doesn't wait for the KV write.
+    if (ghResponse.ok) {
+      ctx.waitUntil(
+        env.CACHE.put(cacheKey, body, { expirationTtl: route.ttl }),
+      );
+    }
 
     return corsResponse(
-      new Response(body, { status: ghResponse.status, headers }),
-      origin
+      new Response(body, {
+        status: ghResponse.status,
+        headers: {
+          'Content-Type':  'application/json',
+          'Cache-Control': `s-maxage=${route.ttl}`,
+          'X-Cache':       'MISS',
+        },
+      }),
+      origin,
     );
   },
 };
@@ -92,6 +134,7 @@ function corsResponse(response: Response, origin: string): Response {
   headers.set('Access-Control-Allow-Origin',  allowed);
   headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
   headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  headers.set('Access-Control-Expose-Headers', 'X-Cache');
   return new Response(response.body, {
     status:  response.status,
     headers,
