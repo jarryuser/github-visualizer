@@ -1,5 +1,6 @@
 interface ImportMetaEnv {
-  readonly VITE_GITHUB_TOKEN?: string;
+  /** Optional Worker URL override for local development. */
+  readonly VITE_PROXY_URL?: string;
 }
  
 interface ImportMeta {
