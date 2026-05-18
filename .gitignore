@@ -3,6 +3,9 @@ node_modules/
 node_modules/.cache
 .DS_Store
 
+# vite build/dev artifacts
+vite.config.ts.timestamp-*
+
 # secrets & local config
 .env
 .env.local
