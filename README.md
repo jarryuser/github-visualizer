@@ -224,7 +224,7 @@ Append `?fresh=1` to any Worker request to bypass the cache for one call.
 
 ### 🔜 In progress
 
-- [ ] **Commit time heatmap** — show when a user typically codes: by hour of day and day of week. "Most active on Wednesday evenings."
+_(nothing currently in progress)_
 
 ### 📋 Planned
 
@@ -237,9 +237,10 @@ Append `?fresh=1` to any Worker request to bypass the cache for one call.
 
 ### ✅ Done
 
+- [x] **Commit time heatmap** — 7×24 grid showing when a user typically codes, by hour of day and day of week. "Most active on Wednesday evenings."
 - [x] **Profile comparison** — `?tab=compare&a=…&b=…`, side-by-side stats with winner indicator, language overlap, stacked heatmaps
 - [x] **Cloudflare Worker proxy** — token never reaches the browser
-- [x] **Workers KV cache** — 10–60 min TTL per route, `?fresh=1` to bypass
+- [x] **Workers KV cache** — 10-60 min TTL per route, `?fresh=1` to bypass
 
 ### 💡 Ideas under consideration
 
