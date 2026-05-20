@@ -1,4 +1,4 @@
-// ── Types ──────────────────────────────────────────────────────────────────────
+// Types
 
 export interface GithubUser {
   login: string;
@@ -36,11 +36,16 @@ export interface Contribution {
   level: 0 | 1 | 2 | 3 | 4;
 }
 
-// ── Base fetch ─────────────────────────────────────────────────────────────────
+export interface GithubEvent {
+  type: string;
+  created_at: string;
+}
+
+// Base fetch
 
 /**
  * All GitHub API requests go through the Cloudflare Worker proxy.
- * The token lives there as a secret — it never reaches the browser.
+ * The token lives there as a secret - it never reaches the browser.
  *
  * Local dev:  set VITE_PROXY_URL=http://localhost:8787 in .env
  * Production: Worker is deployed at the URL below automatically.
@@ -57,28 +62,16 @@ async function ghJson<T>(path: string): Promise<T> {
   return res.json();
 }
 
-// ── Endpoints ──────────────────────────────────────────────────────────────────
+// Endpoints
 
-/**
- * GET /users/{username}
- * Профиль: имя, аватар, bio, кол-во репозиториев, фолловеры.
- */
 export async function fetchUser(username: string): Promise<GithubUser> {
   return ghJson<GithubUser>(`/users/${username}`);
 }
 
-/**
- * GET /users/{username}/repos?per_page=100&sort=updated
- * Все публичные репозитории пользователя.
- */
 export async function fetchRepos(username: string): Promise<GithubRepo[]> {
   return ghJson<GithubRepo[]>(`/users/${username}/repos?per_page=100&sort=updated`);
 }
 
-/**
- * GET /repos/{username}/{repo}/languages
- * Байты кода по языкам для одного репозитория.
- */
 async function fetchRepoLanguages(
   username: string,
   repo: string
@@ -121,7 +114,7 @@ export async function fetchAllLanguages(
 }
 
 /**
- * Contributions via third-party proxy (no token needed — public data).
+ * Contributions via third-party proxy (no token needed - public data).
  */
 export async function fetchContributions(
   username: string
@@ -132,4 +125,20 @@ export async function fetchContributions(
   if (!res.ok) throw new Error('Failed to fetch contributions');
   const data = await res.json();
   return data.contributions as Contribution[];
+}
+
+/**
+ * Fetches up to 200 recent public events for a user.
+ * Used to build the coding time heatmap.
+ */
+export async function fetchUserEvents(username: string): Promise<GithubEvent[]> {
+  const [page1, page2] = await Promise.allSettled([
+    ghJson<GithubEvent[]>(`/users/${username}/events?per_page=100&page=1`),
+    ghJson<GithubEvent[]>(`/users/${username}/events?per_page=100&page=2`),
+  ]);
+
+  const events: GithubEvent[] = [];
+  if (page1.status === 'fulfilled') events.push(...page1.value);
+  if (page2.status === 'fulfilled') events.push(...page2.value);
+  return events;
 }
