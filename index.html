@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GitHub Activity Visualizer</title>
-  <script type="module" crossorigin src="/github-visualizer/assets/index-C9aMTB4-.js"></script>
+  <script type="module" crossorigin src="/github-visualizer/assets/index-DaevaXps.js"></script>
   <link rel="stylesheet" crossorigin href="/github-visualizer/assets/index-CNDtVqEV.css">
 </head>
 <body>
@@ -98,6 +98,17 @@
             Contribution activity — last 12 months
           </div>
           <div id="streak-container"></div>
+        </div>
+
+        <!-- Coding hours heatmap -->
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 0a8 8 0 110 16A8 8 0 018 0zM1.5 8a6.5 6.5 0 1013 0 6.5 6.5 0 00-13 0zm7-3.25v2.992l2.028.812a.75.75 0 01-.557 1.392l-2.5-1A.75.75 0 017 8.25v-3.5a.75.75 0 011.5 0z"/>
+            </svg>
+            Coding hours
+          </div>
+          <div id="commit-heatmap-container" style="position:relative;overflow-x:auto"></div>
         </div>
 
         <!-- Languages + Repos -->
