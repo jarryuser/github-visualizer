@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GitHub Activity Visualizer</title>
-  <script type="module" crossorigin src="/github-visualizer/assets/index-DaevaXps.js"></script>
-  <link rel="stylesheet" crossorigin href="/github-visualizer/assets/index-CNDtVqEV.css">
+  <script type="module" crossorigin src="/github-visualizer/assets/index-mD4OmOFn.js"></script>
+  <link rel="stylesheet" crossorigin href="/github-visualizer/assets/index-12XjOxAx.css">
 </head>
 <body>
   <div class="app">
@@ -19,7 +19,6 @@
         GitHub Visualizer
       </span>
 
-      <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
       <nav class="tabs" role="tablist">
         <button class="tab tab--active" id="tab-profile" role="tab" aria-selected="true">
           Profile
@@ -28,6 +27,11 @@
           Compare
         </button>
       </nav>
+
+      <div id="rate-limit-badge" class="rate-limit-badge" style="display:none" aria-label="GitHub API rate limit">
+        <span id="rate-limit-dot" class="rate-limit-dot"></span>
+        <span id="rate-limit-text"></span>
+      </div>
     </header>
 
     <!-- ── Profile search ────────────────────────────────────────────────────── -->
