@@ -18,7 +18,6 @@
         GitHub Visualizer
       </span>
 
-      <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
       <nav class="tabs" role="tablist">
         <button class="tab tab--active" id="tab-profile" role="tab" aria-selected="true">
           Profile
@@ -27,6 +26,11 @@
           Compare
         </button>
       </nav>
+
+      <div id="rate-limit-badge" class="rate-limit-badge" style="display:none" aria-label="GitHub API rate limit">
+        <span id="rate-limit-dot" class="rate-limit-dot"></span>
+        <span id="rate-limit-text"></span>
+      </div>
     </header>
 
     <!-- ── Profile search ────────────────────────────────────────────────────── -->

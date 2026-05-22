@@ -38,6 +38,7 @@ const ALLOWED_ORIGINS = [
 // Routes the Worker is allowed to proxy + cache TTL (seconds).
 // Languages change rarely - cache long. User/repos/events change more often - short.
 const ROUTE_TTL: Array<{ pattern: RegExp; ttl: number }> = [
+  { pattern: /^\/rate_limit$/, ttl: 60 },                       // 1 min - live quota
   { pattern: /^\/users\/[^/]+$/, ttl: 600 },                   // 10 min
   { pattern: /^\/users\/[^/]+\/repos$/, ttl: 600 },            // 10 min
   { pattern: /^\/users\/[^/]+\/events$/, ttl: 900 },           // 15 min

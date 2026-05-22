@@ -41,6 +41,12 @@ export interface GithubEvent {
   created_at: string;
 }
 
+export interface RateLimit {
+  limit: number;
+  remaining: number;
+  reset: number; // Unix timestamp (seconds)
+}
+
 // Base fetch
 
 /**
@@ -125,6 +131,15 @@ export async function fetchContributions(
   if (!res.ok) throw new Error('Failed to fetch contributions');
   const data = await res.json();
   return data.contributions as Contribution[];
+}
+
+/**
+ * Returns the current GitHub API rate limit for the Worker's token.
+ * Calling this endpoint does not consume any quota.
+ */
+export async function fetchRateLimit(): Promise<RateLimit> {
+  const data = await ghJson<{ resources: { core: RateLimit } }>('/rate_limit');
+  return data.resources.core;
 }
 
 /**

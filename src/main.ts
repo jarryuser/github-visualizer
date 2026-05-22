@@ -4,6 +4,7 @@ import {
   fetchAllLanguages,
   fetchContributions,
   fetchUserEvents,
+  fetchRateLimit,
 } from './api';
 import { renderStreakGraph } from './streak';
 import { renderLanguageChart } from './languages';
@@ -31,6 +32,9 @@ const streakWrap = document.getElementById('streak-container') as HTMLElement;
 const langWrap = document.getElementById('lang-container') as HTMLElement;
 const reposWrap = document.getElementById('repos-container') as HTMLElement;
 const commitHeatmapWrap = document.getElementById('commit-heatmap-container') as HTMLElement;
+const rateLimitBadge = document.getElementById('rate-limit-badge') as HTMLElement;
+const rateLimitDot = document.getElementById('rate-limit-dot') as HTMLElement;
+const rateLimitText = document.getElementById('rate-limit-text') as HTMLElement;
 
 // DOM refs - Tabs & Compare
 
@@ -101,6 +105,27 @@ export function animateCount(el: HTMLElement, target: number, suffix = '') {
   requestAnimationFrame(tick);
 }
 
+// Rate limit badge
+
+async function updateRateLimitBadge() {
+  try {
+    const rl = await fetchRateLimit();
+    const resetIn = Math.max(0, Math.round((rl.reset * 1000 - Date.now()) / 60000));
+
+    const dotClass =
+      rl.remaining > 1000 ? 'rate-limit-dot--ok' :
+      rl.remaining > 200  ? 'rate-limit-dot--warn' :
+                            'rate-limit-dot--danger';
+
+    rateLimitDot.className = `rate-limit-dot ${dotClass}`;
+    rateLimitText.textContent = `${rl.remaining.toLocaleString()} / ${rl.limit.toLocaleString()} API requests`;
+    rateLimitBadge.title = `Resets in ${resetIn} min`;
+    rateLimitBadge.style.display = 'flex';
+  } catch {
+    // Non-critical - silently ignore if rate limit fetch fails
+  }
+}
+
 // Profile dashboard
 
 async function buildDashboard(username: string) {
@@ -141,6 +166,7 @@ async function buildDashboard(username: string) {
     renderLanguageChart(langWrap, languages);
     renderTopRepos(reposWrap, repos);
     renderCommitHeatmap(commitHeatmapWrap, events);
+    updateRateLimitBadge();
 
     const params = new URLSearchParams(location.search);
     params.set('user', username);
