@@ -24,7 +24,7 @@
 
 export interface Env {
   GITHUB_TOKEN: string; // set via: npx wrangler secret put GITHUB_TOKEN
-  CACHE: KVNamespace;   // KV namespace bound in wrangler.toml
+  CACHE: KVNamespace; // KV namespace bound in wrangler.toml
 }
 
 const GITHUB_BASE = 'https://api.github.com';
@@ -38,10 +38,10 @@ const ALLOWED_ORIGINS = [
 // Routes the Worker is allowed to proxy + cache TTL (seconds).
 // Languages change rarely - cache long. User/repos/events change more often - short.
 const ROUTE_TTL: Array<{ pattern: RegExp; ttl: number }> = [
-  { pattern: /^\/rate_limit$/, ttl: 60 },                       // 1 min - live quota
-  { pattern: /^\/users\/[^/]+$/, ttl: 600 },                   // 10 min
-  { pattern: /^\/users\/[^/]+\/repos$/, ttl: 600 },            // 10 min
-  { pattern: /^\/users\/[^/]+\/events$/, ttl: 900 },           // 15 min
+  { pattern: /^\/rate_limit$/, ttl: 60 }, // 1 min - live quota
+  { pattern: /^\/users\/[^/]+$/, ttl: 600 }, // 10 min
+  { pattern: /^\/users\/[^/]+\/repos$/, ttl: 600 }, // 10 min
+  { pattern: /^\/users\/[^/]+\/events$/, ttl: 900 }, // 15 min
   { pattern: /^\/repos\/[^/]+\/[^/]+\/languages$/, ttl: 3600 }, // 60 min
 ];
 

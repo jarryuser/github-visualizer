@@ -20,19 +20,20 @@ import {
 } from './api';
 import { renderStreakGraph } from './streak';
 import { LANG_COLORS } from './languages';
+import { computeHealthData, scoreColor } from './healthScore';
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+// Types
 
 interface ProfileData {
-  user:          GithubUser;
-  repos:         GithubRepo[];
-  languages:     LangData[];
+  user: GithubUser;
+  repos: GithubRepo[];
+  languages: LangData[];
   contributions: Contribution[];
-  totalStars:    number;
-  streak:        number;
+  totalStars: number;
+  streak: number;
 }
 
-// ── Data fetching ──────────────────────────────────────────────────────────────
+// Data fetching
 
 export async function fetchProfileData(username: string): Promise<ProfileData> {
   const [user, repos] = await Promise.all([
@@ -52,7 +53,7 @@ export async function fetchProfileData(username: string): Promise<ProfileData> {
   return { user, repos, languages, contributions, totalStars, streak: 0 };
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────────
+// Render
 
 export function renderComparison(
   container: HTMLElement,
@@ -71,6 +72,7 @@ export function renderComparison(
     ${renderProfileHeaders(a, b)}
     ${renderStatRows(a, b)}
     ${renderLanguageComparison(a, b)}
+    ${renderHealthComparison(a, b)}
   `;
 
   // Inject streak SVGs (can't serialize them to HTML string cleanly)
@@ -80,7 +82,7 @@ export function renderComparison(
   if (streakContainerB) streakContainerB.appendChild(streakB.svg);
 }
 
-// ── Profile headers ────────────────────────────────────────────────────────────
+// Profile headers
 
 function renderProfileHeaders(a: ProfileData, b: ProfileData): string {
   return `
@@ -118,12 +120,12 @@ function profileHeader(user: GithubUser, side: 'a' | 'b'): string {
   `;
 }
 
-// ── Stat rows ──────────────────────────────────────────────────────────────────
+// Stat rows
 
 interface StatRow {
-  label:  string;
-  valA:   number;
-  valB:   number;
+  label: string;
+  valA: number;
+  valB: number;
   suffix?: string;
   /** Higher is better (default true). Set false e.g. for "days since last commit". */
   higherIsBetter?: boolean;
@@ -131,11 +133,11 @@ interface StatRow {
 
 function renderStatRows(a: ProfileData, b: ProfileData): string {
   const rows: StatRow[] = [
-    { label: 'Repositories',   valA: a.user.public_repos, valB: b.user.public_repos },
-    { label: 'Total stars',    valA: a.totalStars,         valB: b.totalStars },
-    { label: 'Followers',      valA: a.user.followers,     valB: b.user.followers },
-    { label: 'Following',      valA: a.user.following,     valB: b.user.following },
-    { label: 'Current streak', valA: a.streak,             valB: b.streak, suffix: 'd' },
+    { label: 'Repositories', valA: a.user.public_repos, valB: b.user.public_repos },
+    { label: 'Total stars', valA: a.totalStars, valB: b.totalStars },
+    { label: 'Followers', valA: a.user.followers, valB: b.user.followers },
+    { label: 'Following', valA: a.user.following, valB: b.user.following },
+    { label: 'Current streak', valA: a.streak, valB: b.streak, suffix: 'd' },
   ];
 
   const rowsHtml = rows.map(row => statRow(row)).join('');
@@ -162,14 +164,14 @@ function renderStatRows(a: ProfileData, b: ProfileData): string {
 
 function statRow(row: StatRow): string {
   const higher = row.higherIsBetter ?? true;
-  const aWins  = higher ? row.valA > row.valB : row.valA < row.valB;
-  const bWins  = higher ? row.valB > row.valA : row.valB < row.valA;
-  const tied   = row.valA === row.valB;
+  const aWins = higher ? row.valA > row.valB : row.valA < row.valB;
+  const bWins = higher ? row.valB > row.valA : row.valB < row.valA;
+  const tied = row.valA === row.valB;
 
   const suffix = row.suffix ?? '';
 
   // Bar widths: winner gets 100%, loser gets proportional %
-  const max    = Math.max(row.valA, row.valB, 1);
+  const max = Math.max(row.valA, row.valB, 1);
   const widthA = Math.round((row.valA / max) * 100);
   const widthB = Math.round((row.valB / max) * 100);
 
@@ -211,7 +213,7 @@ function statRow(row: StatRow): string {
   `;
 }
 
-// ── Language comparison ────────────────────────────────────────────────────────
+// Language comparison
 
 function renderLanguageComparison(a: ProfileData, b: ProfileData): string {
   // All unique languages across both profiles
@@ -224,10 +226,10 @@ function renderLanguageComparison(a: ProfileData, b: ProfileData): string {
       const la = a.languages.find(l => l.name === lang);
       const lb = b.languages.find(l => l.name === lang);
       return {
-        name:    lang,
+        name: lang,
         percentA: la?.percent ?? 0,
         percentB: lb?.percent ?? 0,
-        color:   LANG_COLORS[lang] ?? '#8b949e',
+        color: LANG_COLORS[lang] ?? '#8b949e',
       };
     })
     .sort((x, y) => Math.max(y.percentA, y.percentB) - Math.max(x.percentA, x.percentB))
@@ -275,7 +277,77 @@ function renderLanguageComparison(a: ProfileData, b: ProfileData): string {
   `;
 }
 
-// ── Streak helper ──────────────────────────────────────────────────────────────
+// Health comparison
+
+function renderHealthComparison(a: ProfileData, b: ProfileData): string {
+  const healthA = computeHealthData(a.repos);
+  const healthB = computeHealthData(b.repos);
+
+  if (healthA.checks.length === 0 || healthB.checks.length === 0) return '';
+
+  const rowsHtml = healthA.checks.map((checkA, i) => {
+    const checkB = healthB.checks[i];
+    const pctA = Math.round((checkA.pass / checkA.total) * 100);
+    const pctB = Math.round((checkB.pass / checkB.total) * 100);
+
+    return `
+      <div class="cmp-health-row">
+        <div class="cmp-lang-bar-side cmp-lang-bar-side--a">
+          <div class="cmp-lang-bar-bg">
+            <div class="cmp-lang-bar" style="width:${pctA}%;background:${scoreColor(pctA)};margin-left:auto"></div>
+          </div>
+          <span class="cmp-lang-pct">${checkA.pass}/${checkA.total}</span>
+        </div>
+        <div class="cmp-health-criterion">${checkA.shortLabel}</div>
+        <div class="cmp-lang-bar-side cmp-lang-bar-side--b">
+          <span class="cmp-lang-pct">${checkB.pass}/${checkB.total}</span>
+          <div class="cmp-lang-bar-bg">
+            <div class="cmp-lang-bar" style="width:${pctB}%;background:${scoreColor(pctB)}"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const aWins = healthA.overallPct > healthB.overallPct;
+  const bWins = healthB.overallPct > healthA.overallPct;
+  const tied = healthA.overallPct === healthB.overallPct;
+
+  return `
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">Repository health</div>
+      <div class="cmp-lang-header">
+        <span class="cmp-lang-username">@${a.user.login}</span>
+        <span></span>
+        <span class="cmp-lang-username" style="text-align:right">@${b.user.login}</span>
+      </div>
+      <div class="cmp-health-rows">${rowsHtml}</div>
+      <div class="cmp-stat-row" style="border-top:1px solid var(--border-soft);padding-top:12px">
+        <div class="cmp-stat-side cmp-stat-side--a">
+          <div class="cmp-stat-top">
+            <span class="cmp-stat-val ${aWins && !tied ? 'cmp-stat-val--win' : ''}" style="color:${scoreColor(healthA.overallPct)}">${healthA.overallPct}%</span>
+            ${aWins && !tied ? '<span class="cmp-winner-badge">winner</span>' : ''}
+          </div>
+          <div class="cmp-bar-wrap">
+            <div class="cmp-bar" style="width:${healthA.overallPct}%;background:${scoreColor(healthA.overallPct)}"></div>
+          </div>
+        </div>
+        <div class="cmp-stat-label">Overall</div>
+        <div class="cmp-stat-side cmp-stat-side--b">
+          <div class="cmp-stat-top cmp-stat-top--b">
+            ${bWins && !tied ? '<span class="cmp-winner-badge">winner</span>' : ''}
+            <span class="cmp-stat-val ${bWins && !tied ? 'cmp-stat-val--win' : ''}" style="color:${scoreColor(healthB.overallPct)}">${healthB.overallPct}%</span>
+          </div>
+          <div class="cmp-bar-wrap cmp-bar-wrap--b">
+            <div class="cmp-bar" style="width:${healthB.overallPct}%;background:${scoreColor(healthB.overallPct)}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Streak helper
 
 /**
  * Render streak graph into a detached div and return both the element
