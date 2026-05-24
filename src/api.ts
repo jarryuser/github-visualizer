@@ -22,6 +22,9 @@ export interface GithubRepo {
   language: string | null;
   fork: boolean;
   updated_at: string;
+  pushed_at: string;
+  license: { name: string; spdx_id: string } | null;
+  topics: string[];
 }
 
 export interface LangData {

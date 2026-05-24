@@ -11,6 +11,7 @@ import { renderLanguageChart } from './languages';
 import { renderTopRepos } from './repos';
 import { fetchProfileData, renderComparison } from './compare';
 import { renderCommitHeatmap } from './commitHeatmap';
+import { renderHealthReport } from './healthScore';
 
 // DOM refs - Profile
 
@@ -32,6 +33,7 @@ const streakWrap = document.getElementById('streak-container') as HTMLElement;
 const langWrap = document.getElementById('lang-container') as HTMLElement;
 const reposWrap = document.getElementById('repos-container') as HTMLElement;
 const commitHeatmapWrap = document.getElementById('commit-heatmap-container') as HTMLElement;
+const healthWrap = document.getElementById('health-container') as HTMLElement;
 const rateLimitBadge = document.getElementById('rate-limit-badge') as HTMLElement;
 const rateLimitDot = document.getElementById('rate-limit-dot') as HTMLElement;
 const rateLimitText = document.getElementById('rate-limit-text') as HTMLElement;
@@ -166,6 +168,7 @@ async function buildDashboard(username: string) {
     renderLanguageChart(langWrap, languages);
     renderTopRepos(reposWrap, repos);
     renderCommitHeatmap(commitHeatmapWrap, events);
+    renderHealthReport(healthWrap, repos);
     updateRateLimitBadge();
 
     const params = new URLSearchParams(location.search);
