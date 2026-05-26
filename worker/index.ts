@@ -30,9 +30,7 @@ export interface Env {
 const GITHUB_BASE = 'https://api.github.com';
 
 const ALLOWED_ORIGINS = [
-  'https://jarryuser.github.io', // GitHub Pages
-  'http://localhost:5173',       // local dev
-  'http://localhost:4173',       // vite preview
+  'https://jarryuser.github.io',
 ];
 
 // Routes the Worker is allowed to proxy + cache TTL (seconds).
@@ -44,6 +42,10 @@ const ROUTE_TTL: Array<{ pattern: RegExp; ttl: number }> = [
   { pattern: /^\/users\/[^/]+\/events$/, ttl: 900 }, // 15 min
   { pattern: /^\/repos\/[^/]+\/[^/]+\/languages$/, ttl: 3600 }, // 60 min
 ];
+
+function isAllowedOrigin(origin: string): boolean {
+  return ALLOWED_ORIGINS.includes(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin);
+}
 
 function matchRoute(pathname: string): { ttl: number } | null {
   for (const { pattern, ttl } of ROUTE_TTL) {
@@ -132,7 +134,7 @@ export default {
 // CORS helper
 
 function corsResponse(response: Response, origin: string): Response {
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowed = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', allowed);
   headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
