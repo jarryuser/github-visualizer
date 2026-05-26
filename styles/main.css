@@ -1,3 +1,18 @@
+/* Light theme */
+
+html[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-card: #f6f8fa;
+  --bg-input: #f0f3f6;
+  --border: #d0d7de;
+  --border-soft: #d8dee4;
+  --text: #1f2328;
+  --text-muted: #636c76;
+  --accent: #0969da;
+  --accent-soft: #0969da1a;
+  --green: #1a7f37;
+}
+
 /* Reset & base */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -401,6 +416,27 @@ a:hover { text-decoration: underline; }
   color: var(--text);
   border: 1px solid var(--border);
 }
+
+/* Theme toggle */
+
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+
+.theme-toggle:hover { color: var(--text); }
+
+.theme-toggle .icon-moon { display: none; }
+
+html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
 
 /* Rate limit badge */
 
