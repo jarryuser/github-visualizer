@@ -7,11 +7,16 @@ const STEP = CELL + GAP;
 const COLORS = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+function cssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 export function renderStreakGraph(
   container: HTMLElement,
   contributions: Contribution[]
 ): number {
   container.innerHTML = '';
+  const textColor = cssVar('--text-muted') || '#8b949e';
 
   const weeks = d3.groups(
     contributions,
@@ -56,7 +61,7 @@ export function renderStreakGraph(
       .attr('x', i * STEP)
       .attr('y', 11)
       .attr('font-size', '10px')
-      .attr('fill', '#8b949e')
+      .attr('fill', textColor)
       .attr('font-family', 'monospace')
       .text(month);
   });
@@ -98,7 +103,7 @@ export function renderStreakGraph(
       .attr('x', weeks.length * STEP + 4)
       .attr('y', dayIdx * STEP + 16 + CELL * 0.75)
       .attr('font-size', '10px')
-      .attr('fill', '#8b949e')
+      .attr('fill', textColor)
       .attr('font-family', 'monospace')
       .text(DAY_LABELS[dayIdx]);
   });
