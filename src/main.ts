@@ -1,3 +1,4 @@
+import { toPng } from 'html-to-image';
 import {
   fetchUser,
   fetchRepos,
@@ -12,6 +13,15 @@ import { renderTopRepos } from './repos';
 import { fetchProfileData, renderComparison } from './compare';
 import { renderCommitHeatmap } from './commitHeatmap';
 import { renderHealthReport } from './healthScore';
+import type { Contribution, GithubEvent } from './api';
+
+function cssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// Stored for re-rendering D3 charts on theme toggle
+let lastContributions: Contribution[] | null = null;
+let lastEvents: GithubEvent[] | null = null;
 
 // DOM refs - Profile
 
@@ -37,6 +47,7 @@ const healthWrap = document.getElementById('health-container') as HTMLElement;
 const rateLimitBadge = document.getElementById('rate-limit-badge') as HTMLElement;
 const rateLimitDot = document.getElementById('rate-limit-dot') as HTMLElement;
 const rateLimitText = document.getElementById('rate-limit-text') as HTMLElement;
+const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
 
 // DOM refs - Tabs & Compare
 
@@ -80,12 +91,14 @@ tabCompare.addEventListener('click', () => switchTab('compare'));
 // Profile helpers
 
 let isLoading = false;
+let currentUsername = '';
 
 function setLoading(state: boolean) {
   isLoading = state;
   loadingEl.style.display = state ? 'flex' : 'none';
   dashboard.style.display = state ? 'none' : 'block';
   errorBox.style.display = 'none';
+  if (state) exportBtn.style.display = 'none';
 }
 
 function showError(msg: string) {
@@ -171,6 +184,11 @@ async function buildDashboard(username: string) {
     renderHealthReport(healthWrap, repos);
     updateRateLimitBadge();
 
+    lastContributions = contributions;
+    lastEvents = events;
+    currentUsername = username;
+    exportBtn.style.display = 'flex';
+
     const params = new URLSearchParams(location.search);
     params.set('user', username);
     history.replaceState(null, '', `?${params.toString()}`);
@@ -223,6 +241,54 @@ compareForm.addEventListener('submit', e => {
   const b = compareInputB.value.trim();
   if (a && b) buildComparison(a, b);
 });
+
+// Export
+
+async function exportDashboard() {
+  exportBtn.disabled = true;
+  try {
+    const pad = 20;
+    const dataUrl = await toPng(dashboard, {
+      backgroundColor: cssVar('--bg') || '#0d1117',
+      cacheBust: true,
+      width: dashboard.offsetWidth + pad * 2,
+      height: dashboard.offsetHeight + pad * 2,
+      style: { padding: `${pad}px`, boxSizing: 'border-box' },
+    });
+    const link = document.createElement('a');
+    link.download = `${currentUsername}-github-stats.png`;
+    link.href = dataUrl;
+    link.click();
+  } catch {
+    // non-critical
+  } finally {
+    exportBtn.disabled = false;
+  }
+}
+
+exportBtn.addEventListener('click', exportDashboard);
+
+// Theme
+
+const themeToggleBtn = document.getElementById('theme-toggle') as HTMLButtonElement;
+
+function applyTheme(theme: 'dark' | 'light') {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+}
+
+themeToggleBtn.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') as 'dark' | 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+
+  // Re-render D3 charts that use theme-dependent colors
+  if (lastContributions) renderStreakGraph(streakWrap, lastContributions);
+  if (lastEvents) renderCommitHeatmap(commitHeatmapWrap, lastEvents);
+});
+
+const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' | null;
+if (savedTheme) applyTheme(savedTheme);
 
 // Init from URL
 
