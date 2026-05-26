@@ -45,7 +45,8 @@ All GitHub API calls go through a small **Cloudflare Worker** that holds the API
 | 💾 | **Edge cache** | Workers KV stores responses for 10–60 minutes; repeated lookups skip GitHub entirely |
 | 📡 | **Rate-limit indicator** | Live badge in the header showing remaining API quota with a colour-coded dot |
 | 🩺 | **Repository health** | Checks own repos for description, license, recent activity, and topics — with per-criterion bars and an overall score |
-| 🌙 | **Dark theme** | GitHub-style dark UI |
+| 🌙 | **Dark / light theme** | Toggle between GitHub-dark and light mode; preference saved to localStorage |
+| 🖼️ | **Export as image** | Download the full dashboard as a PNG with one click |
 
 ---
 
@@ -233,14 +234,10 @@ Append `?fresh=1` to any Worker request to bypass the cache for one call.
 
 ## Roadmap
 
-### 📋 Planned
-
-- [ ] **Growth charts** - stars, followers, and repo count over time using the GitHub Events API
-- [ ] **GitHub Profile README generator** - analyse the profile via API, generate a personalised `README.md` with GPT, copy with one click
-- [ ] **Light mode** - toggle between dark (current) and light themes
-- [ ] **Export as image** - download the dashboard as a PNG for sharing
 ### ✅ Done
 
+- [x] **Export as image** - download button appears after a profile loads; exports the full dashboard as a PNG named `{username}-github-stats.png`
+- [x] **Light mode** - sun/moon toggle in the header; D3 charts re-render with theme-aware colors; preference saved to localStorage
 - [x] **Repository health score** - per-criterion bars (description, license, recent activity, topics) across all own repos with an overall percentage score
 - [x] **Rate-limit indicator** - badge in the header showing remaining/total API requests with a colored dot; updates after each profile load. Resets tooltip shows time until quota refresh.
 - [x] **Commit time heatmap** - 7×24 grid showing when a user typically codes, by hour of day and day of week. "Most active on Wednesday evenings"
@@ -252,7 +249,8 @@ Append `?fresh=1` to any Worker request to bypass the cache for one call.
 
 - [ ] Organisation profiles (not just users)
 - [ ] Embed mode - `<iframe>` widget for personal websites
-
+- [ ] **Growth charts** - stars, followers, and repo count over time using the GitHub Events API
+- [ ] **GitHub Profile README generator** - analyse the profile via API, generate a personalised `README.md` with GPT, copy with one click
 ---
 
 ## Known limitations
