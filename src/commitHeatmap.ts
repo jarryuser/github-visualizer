@@ -6,8 +6,16 @@ const CELL = 14;
 const GAP = 2;
 const STEP = CELL + GAP;
 
+function cssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 export function renderCommitHeatmap(container: HTMLElement, events: GithubEvent[]) {
   container.innerHTML = '';
+  const textColor = cssVar('--text-muted') || '#8b949e';
+  const textColorFaint = cssVar('--border') || '#484f58';
+  const bgCard = cssVar('--bg-card') || '#161b22';
+  const accent = cssVar('--accent') || '#388bfd';
 
   const pushEvents = events.filter(e => e.type === 'PushEvent');
 
@@ -28,7 +36,7 @@ export function renderCommitHeatmap(container: HTMLElement, events: GithubEvent[
 
   const colorScale = d3.scaleSequential()
     .domain([0, maxVal])
-    .interpolator(d3.interpolate('#161b22', '#388bfd'));
+    .interpolator(d3.interpolate(bgCard, accent));
 
   const leftPad = 32;
   const topPad = 22;
@@ -48,7 +56,7 @@ export function renderCommitHeatmap(container: HTMLElement, events: GithubEvent[
       .attr('y', topPad - 6)
       .attr('text-anchor', 'middle')
       .attr('font-size', '9px')
-      .attr('fill', '#8b949e')
+      .attr('fill', textColor)
       .attr('font-family', 'monospace')
       .text(`${h}:00`);
   }
@@ -60,7 +68,7 @@ export function renderCommitHeatmap(container: HTMLElement, events: GithubEvent[
       .attr('y', topPad + i * STEP + CELL * 0.75)
       .attr('text-anchor', 'end')
       .attr('font-size', '10px')
-      .attr('fill', '#8b949e')
+      .attr('fill', textColor)
       .attr('font-family', 'monospace')
       .text(day);
   });
@@ -90,7 +98,7 @@ export function renderCommitHeatmap(container: HTMLElement, events: GithubEvent[
         .attr('width', CELL)
         .attr('height', CELL)
         .attr('rx', 2)
-        .attr('fill', count === 0 ? '#161b22' : colorScale(count))
+        .attr('fill', count === 0 ? bgCard : colorScale(count))
         .style('cursor', count > 0 ? 'crosshair' : 'default')
         .on('mouseover', function(event: MouseEvent) {
           if (count === 0) return;
@@ -125,7 +133,7 @@ export function renderCommitHeatmap(container: HTMLElement, events: GithubEvent[
     .attr('x', leftPad)
     .attr('y', topPad + 7 * STEP + 16)
     .attr('font-size', '10px')
-    .attr('fill', '#484f58')
+    .attr('fill', textColorFaint)
     .attr('font-family', 'monospace')
     .text(footerText);
 }
