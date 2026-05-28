@@ -40,6 +40,7 @@ const ROUTE_TTL: Array<{ pattern: RegExp; ttl: number }> = [
   { pattern: /^\/users\/[^/]+$/, ttl: 600 }, // 10 min
   { pattern: /^\/users\/[^/]+\/repos$/, ttl: 600 }, // 10 min
   { pattern: /^\/users\/[^/]+\/events$/, ttl: 900 }, // 15 min
+  { pattern: /^\/orgs\/[^/]+$/, ttl: 600 }, // 10 min - org profile
   { pattern: /^\/repos\/[^/]+\/[^/]+\/languages$/, ttl: 3600 }, // 60 min
 ];
 
