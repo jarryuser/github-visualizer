@@ -75,6 +75,7 @@
           <img id="avatar" src="" alt="User avatar" />
           <div class="profile-info">
             <p id="profile-name"></p>
+            <span id="profile-org-badge" class="org-badge" style="display:none">Organization</span>
             <p id="profile-bio"></p>
             <p id="profile-location">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -105,6 +106,18 @@
             <div class="stat-label">Current streak</div>
             <div class="stat-value" id="stat-streak">—</div>
           </div>
+        </div>
+
+        <!-- Activity trend -->
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
+            </svg>
+            Activity trend — last 12 months
+          </div>
+          <div id="activity-chart-container" style="position:relative"></div>
         </div>
 
         <!-- Streak graph -->
@@ -162,6 +175,17 @@
             Repository health
           </div>
           <div id="health-container"></div>
+        </div>
+
+        <!-- Profile README -->
+        <div id="readme-card" class="card" style="display:none">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.003-2.177A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/>
+            </svg>
+            Profile README
+          </div>
+          <div id="readme-container" class="profile-readme"></div>
         </div>
       </main>
     </div>
