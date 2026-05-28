@@ -11,6 +11,7 @@ export interface GithubUser {
   followers: number;
   following: number;
   created_at: string;
+  type: string; // 'User' | 'Organization'
 }
 
 export interface GithubRepo {
@@ -75,6 +76,11 @@ async function ghJson<T>(path: string): Promise<T> {
 
 export async function fetchUser(username: string): Promise<GithubUser> {
   return ghJson<GithubUser>(`/users/${username}`);
+}
+
+export async function fetchOrgDescription(orgname: string): Promise<string | null> {
+  const data = await ghJson<{ description: string | null }>(`/orgs/${orgname}`);
+  return data.description;
 }
 
 export async function fetchRepos(username: string): Promise<GithubRepo[]> {
