@@ -6,6 +6,7 @@ import {
   fetchContributions,
   fetchUserEvents,
   fetchRateLimit,
+  fetchOrgDescription,
 } from './api';
 import { renderStreakGraph } from './streak';
 import { renderLanguageChart } from './languages';
@@ -13,6 +14,8 @@ import { renderTopRepos } from './repos';
 import { fetchProfileData, renderComparison } from './compare';
 import { renderCommitHeatmap } from './commitHeatmap';
 import { renderHealthReport } from './healthScore';
+import { renderActivityChart } from './activityChart';
+import { fetchProfileReadme, renderProfileReadme } from './profileReadme';
 import type { Contribution, GithubEvent } from './api';
 
 function cssVar(name: string): string {
@@ -22,6 +25,7 @@ function cssVar(name: string): string {
 // Stored for re-rendering D3 charts on theme toggle
 let lastContributions: Contribution[] | null = null;
 let lastEvents: GithubEvent[] | null = null;
+let isOrgProfile = false;
 
 // DOM refs - Profile
 
@@ -32,6 +36,7 @@ const loadingEl = document.getElementById('loading') as HTMLElement;
 const dashboard = document.getElementById('dashboard') as HTMLElement;
 const avatarEl = document.getElementById('avatar') as HTMLImageElement;
 const nameEl = document.getElementById('profile-name') as HTMLElement;
+const orgBadge = document.getElementById('profile-org-badge') as HTMLElement;
 const bioEl = document.getElementById('profile-bio') as HTMLElement;
 const locationEl = document.getElementById('profile-location') as HTMLElement;
 const profileLink = document.getElementById('profile-link') as HTMLAnchorElement;
@@ -44,10 +49,13 @@ const langWrap = document.getElementById('lang-container') as HTMLElement;
 const reposWrap = document.getElementById('repos-container') as HTMLElement;
 const commitHeatmapWrap = document.getElementById('commit-heatmap-container') as HTMLElement;
 const healthWrap = document.getElementById('health-container') as HTMLElement;
+const activityChartWrap = document.getElementById('activity-chart-container') as HTMLElement;
 const rateLimitBadge = document.getElementById('rate-limit-badge') as HTMLElement;
 const rateLimitDot = document.getElementById('rate-limit-dot') as HTMLElement;
 const rateLimitText = document.getElementById('rate-limit-text') as HTMLElement;
 const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
+const readmeCard = document.getElementById('readme-card') as HTMLElement;
+const readmeContainer = document.getElementById('readme-container') as HTMLElement;
 
 // DOM refs - Tabs & Compare
 
@@ -98,7 +106,11 @@ function setLoading(state: boolean) {
   loadingEl.style.display = state ? 'flex' : 'none';
   dashboard.style.display = state ? 'none' : 'block';
   errorBox.style.display = 'none';
-  if (state) exportBtn.style.display = 'none';
+  if (state) {
+    exportBtn.style.display = 'none';
+    readmeCard.style.display = 'none';
+    readmeContainer.innerHTML = '';
+  }
 }
 
 function showError(msg: string) {
@@ -153,16 +165,21 @@ async function buildDashboard(username: string) {
       fetchRepos(username),
     ]);
 
-    const [languages, contributions, events] = await Promise.all([
+    const isOrg = user.type === 'Organization';
+
+    const [languages, contributions, events, orgDescription, readmeRaw] = await Promise.all([
       fetchAllLanguages(username, repos),
-      fetchContributions(username),
+      isOrg ? Promise.resolve([] as Contribution[]) : fetchContributions(username),
       fetchUserEvents(username),
+      isOrg ? fetchOrgDescription(username) : Promise.resolve(null),
+      fetchProfileReadme(username),
     ]);
 
     avatarEl.src = user.avatar_url;
     avatarEl.alt = user.login;
     nameEl.textContent = user.name ?? user.login;
-    bioEl.textContent = user.bio ?? '';
+    orgBadge.style.display = isOrg ? 'inline-flex' : 'none';
+    bioEl.textContent = isOrg ? (orgDescription ?? '') : (user.bio ?? '');
     locationEl.style.display = user.location ? 'flex' : 'none';
     (locationEl.querySelector('span') as HTMLElement).textContent = user.location ?? '';
     profileLink.href = user.html_url;
@@ -175,15 +192,26 @@ async function buildDashboard(username: string) {
     animateCount(statStars, totalStars);
     animateCount(statFollowers, user.followers);
 
-    const streak = renderStreakGraph(streakWrap, contributions);
-    animateCount(statStreak, streak, 'd');
+    const NA_MSG = '<p class="chart-unavailable">Not available for organizations</p>';
+
+    if (isOrg) {
+      activityChartWrap.innerHTML = NA_MSG;
+      streakWrap.innerHTML = NA_MSG;
+      statStreak.textContent = '—';
+    } else {
+      renderActivityChart(activityChartWrap, contributions);
+      const streak = renderStreakGraph(streakWrap, contributions);
+      animateCount(statStreak, streak, 'd');
+    }
 
     renderLanguageChart(langWrap, languages);
     renderTopRepos(reposWrap, repos);
     renderCommitHeatmap(commitHeatmapWrap, events);
     renderHealthReport(healthWrap, repos);
+    if (readmeRaw) renderProfileReadme(readmeCard, readmeContainer, readmeRaw);
     updateRateLimitBadge();
 
+    isOrgProfile = isOrg;
     lastContributions = contributions;
     lastEvents = events;
     currentUsername = username;
@@ -283,7 +311,10 @@ themeToggleBtn.addEventListener('click', () => {
   applyTheme(next);
 
   // Re-render D3 charts that use theme-dependent colors
-  if (lastContributions) renderStreakGraph(streakWrap, lastContributions);
+  if (lastContributions && !isOrgProfile) {
+    renderActivityChart(activityChartWrap, lastContributions);
+    renderStreakGraph(streakWrap, lastContributions);
+  }
   if (lastEvents) renderCommitHeatmap(commitHeatmapWrap, lastEvents);
 });
 
