@@ -38,6 +38,9 @@ All GitHub API calls go through a small **Cloudflare Worker** that holds the API
 | 🌐 | **Language breakdown** | Aggregated across all repos, animated bar chart, colour-coded by language |
 | ⭐ | **Top repositories** | Sorted by stars, with description, language, forks, and last-updated time |
 | 📈 | **Profile stats** | Total public repos, total stars earned, followers, current streak |
+| 📉 | **Activity trend** | Weekly contribution area chart for the last 12 months with hover tooltips |
+| 🏢 | **Organization profiles** | Works for orgs as well as users — repos, languages, health, coding hours all render; contribution-specific charts show a placeholder |
+| 📖 | **Profile README** | If the user has a `{username}/{username}` repo, renders its README.md with full markdown support |
 | ⚔️ | **Profile comparison** | Side-by-side view of two profiles: stats with winner indicator, language overlap, stacked heatmaps |
 | 🔗 | **Shareable links** | Direct URL to any profile: `?user=username` or `?tab=compare&a=…&b=…` |
 | ⚡ | **Parallel fetching** | All API calls run concurrently with `Promise.all` - loads in ~1s |
@@ -172,6 +175,8 @@ github-visualizer/
 │   ├── commitHeatmap.ts       - D3 coding hours heatmap (7×24 grid)
 │   ├── languages.ts           - D3 animated language bar chart
 │   ├── repos.ts               - top repository cards renderer
+│   ├── activityChart.ts       - D3 weekly activity trend area chart
+│   ├── profileReadme.ts       - fetches and renders profile README.md
 │   ├── compare.ts             - side-by-side profile comparison view
 │   ├── healthScore.ts         - repository health report renderer
 │   └── main.ts                - entry point, tab routing, URL state
@@ -236,6 +241,9 @@ Append `?fresh=1` to any Worker request to bypass the cache for one call.
 
 ### ✅ Done
 
+- [x] **Profile README** - renders `{username}/{username}/README.md` with full markdown support; card hidden when README doesn't exist
+- [x] **Organization profiles** - auto-detected via `type` field; fetches org description separately; contribution-specific charts show a placeholder
+- [x] **Activity trend** - weekly contribution area chart for the last 12 months; hover shows exact count per week
 - [x] **Export as image** - download button appears after a profile loads; exports the full dashboard as a PNG named `{username}-github-stats.png`
 - [x] **Light mode** - sun/moon toggle in the header; D3 charts re-render with theme-aware colors; preference saved to localStorage
 - [x] **Repository health score** - per-criterion bars (description, license, recent activity, topics) across all own repos with an overall percentage score
@@ -247,10 +255,8 @@ Append `?fresh=1` to any Worker request to bypass the cache for one call.
 
 ### 💡 Ideas under consideration
 
-- [ ] Organisation profiles (not just users)
-- [ ] Embed mode - `<iframe>` widget for personal websites
-- [ ] **Growth charts** - stars, followers, and repo count over time using the GitHub Events API
 - [ ] **GitHub Profile README generator** - analyse the profile via API, generate a personalised `README.md` with GPT, copy with one click
+- [ ] Embed mode - `<iframe>` widget for personal websites
 ---
 
 ## Known limitations
