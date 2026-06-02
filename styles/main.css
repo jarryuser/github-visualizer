@@ -839,6 +839,124 @@ html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
   font-variant-numeric: tabular-nums;
 }
 
+/* Embed mode */
+
+body.embed-mode .header,
+body.embed-mode #panel-profile,
+body.embed-mode #panel-compare {
+  display: none !important;
+}
+
+body.embed-mode { min-height: unset; background: transparent; }
+body.embed-mode .app { padding: 0; max-width: 100%; }
+
+#embed-view { padding: 8px; }
+
+.embed-loading {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 40px;
+  text-align: center;
+}
+
+.embed-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.embed-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.embed-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+  background: var(--bg);
+}
+
+.embed-info { flex: 1; min-width: 0; }
+
+.embed-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.embed-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+
+.embed-bio {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.embed-link {
+  font-size: 12px;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.embed-stats { display: flex; gap: 20px; }
+
+.embed-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+
+.embed-stat-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.embed-stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.embed-heatmap { overflow: hidden; }
+
+.theme-toggle.copied { color: var(--green); }
+
+.copy-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.copy-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* Profile README */
 
 .profile-readme { font-size: 14px; line-height: 1.7; color: var(--text); }
