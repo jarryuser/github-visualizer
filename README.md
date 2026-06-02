@@ -41,6 +41,7 @@ All GitHub API calls go through a small **Cloudflare Worker** that holds the API
 | 📉 | **Activity trend** | Weekly contribution area chart for the last 12 months with hover tooltips |
 | 🏢 | **Organization profiles** | Works for orgs as well as users — repos, languages, health, coding hours all render; contribution-specific charts show a placeholder |
 | 📖 | **Profile README** | If the user has a `{username}/{username}` repo, renders its README.md with full markdown support |
+| 🪄 | **Embed widget** | Compact profile card embeddable via `<iframe>`; `</>` button in header copies the ready-made snippet |
 | ⚔️ | **Profile comparison** | Side-by-side view of two profiles: stats with winner indicator, language overlap, stacked heatmaps |
 | 🔗 | **Shareable links** | Direct URL to any profile: `?user=username` or `?tab=compare&a=…&b=…` |
 | ⚡ | **Parallel fetching** | All API calls run concurrently with `Promise.all` - loads in ~1s |
@@ -176,6 +177,7 @@ github-visualizer/
 │   ├── languages.ts           - D3 animated language bar chart
 │   ├── repos.ts               - top repository cards renderer
 │   ├── activityChart.ts       - D3 weekly activity trend area chart
+│   ├── embed.ts               - compact embed card: fetch + render for iframe widget
 │   ├── profileReadme.ts       - fetches and renders profile README.md
 │   ├── compare.ts             - side-by-side profile comparison view
 │   ├── healthScore.ts         - repository health report renderer
@@ -241,6 +243,7 @@ Append `?fresh=1` to any Worker request to bypass the cache for one call.
 
 ### ✅ Done
 
+- [x] **Embed widget** - compact profile card via `?embed=1&user=…&theme=dark/light`; `</>` button copies the iframe snippet; card shows avatar, name, location, and key stats
 - [x] **Profile README** - renders `{username}/{username}/README.md` with full markdown support; card hidden when README doesn't exist
 - [x] **Organization profiles** - auto-detected via `type` field; fetches org description separately; contribution-specific charts show a placeholder
 - [x] **Activity trend** - weekly contribution area chart for the last 12 months; hover shows exact count per week
@@ -256,7 +259,6 @@ Append `?fresh=1` to any Worker request to bypass the cache for one call.
 ### 💡 Ideas under consideration
 
 - [ ] **GitHub Profile README generator** - analyse the profile via API, generate a personalised `README.md` with GPT, copy with one click
-- [ ] Embed mode - `<iframe>` widget for personal websites
 ---
 
 ## Known limitations

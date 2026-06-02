@@ -16,7 +16,10 @@ import { renderCommitHeatmap } from './commitHeatmap';
 import { renderHealthReport } from './healthScore';
 import { renderActivityChart } from './activityChart';
 import { fetchProfileReadme, renderProfileReadme } from './profileReadme';
+import { buildEmbedView } from './embed';
 import type { Contribution, GithubEvent } from './api';
+
+const isEmbed = new URLSearchParams(location.search).get('embed') === '1';
 
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -54,6 +57,9 @@ const rateLimitBadge = document.getElementById('rate-limit-badge') as HTMLElemen
 const rateLimitDot = document.getElementById('rate-limit-dot') as HTMLElement;
 const rateLimitText = document.getElementById('rate-limit-text') as HTMLElement;
 const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
+const embedBtn = document.getElementById('embed-btn') as HTMLButtonElement;
+const copyToast = document.getElementById('copy-toast') as HTMLElement;
+const embedView = document.getElementById('embed-view') as HTMLElement;
 const readmeCard = document.getElementById('readme-card') as HTMLElement;
 const readmeContainer = document.getElementById('readme-container') as HTMLElement;
 
@@ -108,6 +114,7 @@ function setLoading(state: boolean) {
   errorBox.style.display = 'none';
   if (state) {
     exportBtn.style.display = 'none';
+    embedBtn.style.display = 'none';
     readmeCard.style.display = 'none';
     readmeContainer.innerHTML = '';
   }
@@ -216,6 +223,7 @@ async function buildDashboard(username: string) {
     lastEvents = events;
     currentUsername = username;
     exportBtn.style.display = 'flex';
+    embedBtn.style.display = 'flex';
 
     const params = new URLSearchParams(location.search);
     params.set('user', username);
@@ -296,6 +304,30 @@ async function exportDashboard() {
 
 exportBtn.addEventListener('click', exportDashboard);
 
+let toastTimer: ReturnType<typeof setTimeout>;
+
+function showToast(msg: string) {
+  clearTimeout(toastTimer);
+  copyToast.textContent = msg;
+  copyToast.classList.add('show');
+  toastTimer = setTimeout(() => copyToast.classList.remove('show'), 2500);
+}
+
+embedBtn.addEventListener('click', async () => {
+  const theme = document.documentElement.getAttribute('data-theme') ?? 'dark';
+  const base = `${location.origin}${location.pathname}`;
+  const src = `${base}?user=${currentUsername}&embed=1&theme=${theme}`;
+  const code = `<iframe src="${src}" width="480" height="260" frameborder="0" style="border-radius:12px"></iframe>`;
+  try {
+    await navigator.clipboard.writeText(code);
+    embedBtn.classList.add('copied');
+    setTimeout(() => embedBtn.classList.remove('copied'), 2000);
+    showToast('Embed code copied!');
+  } catch {
+    // clipboard API not available
+  }
+});
+
 // Theme
 
 const themeToggleBtn = document.getElementById('theme-toggle') as HTMLButtonElement;
@@ -319,13 +351,22 @@ themeToggleBtn.addEventListener('click', () => {
 });
 
 const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' | null;
-if (savedTheme) applyTheme(savedTheme);
+if (savedTheme && !isEmbed) applyTheme(savedTheme);
 
 // Init from URL
 
 const params = new URLSearchParams(location.search);
 
-if (params.get('tab') === 'compare') {
+if (isEmbed) {
+  const urlTheme = params.get('theme');
+  if (urlTheme === 'light' || urlTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', urlTheme);
+  }
+  document.body.classList.add('embed-mode');
+  embedView.style.display = 'block';
+  const urlUser = params.get('user');
+  if (urlUser) buildEmbedView(embedView, urlUser);
+} else if (params.get('tab') === 'compare') {
   switchTab('compare');
   const a = params.get('a');
   const b = params.get('b');
