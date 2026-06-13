@@ -13,6 +13,9 @@
 [![Cloudflare Workers](https://img.shields.io/badge/Proxy-Cloudflare%20Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![GitHub Pages](https://img.shields.io/badge/Deployed%20on-GitHub%20Pages-222?style=flat-square&logo=github)](https://pages.github.com/)
 
+**English** · [Українська](README.uk.md) · [Slovenčina](README.sk.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
+
+
 </div>
 
 ---
