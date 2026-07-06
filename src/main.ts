@@ -231,6 +231,7 @@ async function buildDashboard(username: string) {
 
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Something went wrong');
+    isLoading = false;
   }
 }
 

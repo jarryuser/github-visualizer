@@ -4,11 +4,22 @@ import type { Contribution } from './api';
 const CELL = 13;
 const GAP = 3;
 const STEP = CELL + GAP;
-const COLORS = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const LEGEND_LABELS = ['Less', 'More'];
+
+// GitHub-exact contribution colors
+const GITHUB_COLORS: Record<string, string[]> = {
+  light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
+  dark:  ['#151b23', '#0e4429', '#006d32', '#26a641', '#39d353'],
+};
 
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function themeColors(): string[] {
+  const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  return GITHUB_COLORS[theme] || GITHUB_COLORS.dark;
 }
 
 export function renderStreakGraph(
@@ -16,22 +27,27 @@ export function renderStreakGraph(
   contributions: Contribution[]
 ): number {
   container.innerHTML = '';
+  container.style.overflow = 'visible';
   const textColor = cssVar('--text-muted') || '#8b949e';
+  const colors = themeColors();
 
   const weeks = d3.groups(
     contributions,
     d => d3.timeWeek.floor(new Date(d.date + 'T12:00:00')).toISOString()
   );
 
-  const DAY_LABEL_WIDTH = 28;
-  const svgWidth = weeks.length * STEP + DAY_LABEL_WIDTH;
-  const svgHeight = 7 * STEP + 20; // +20 for month labels at top
+  const GUTTER = 28;
+  const MONTH_H = 20;
+  const LEGEND_H = 22;
+  const svgW = GUTTER + weeks.length * STEP;
+  const svgH = 7 * STEP + MONTH_H + LEGEND_H;
 
   const svg = d3.select(container)
     .append('svg')
-    .attr('width', svgWidth)
-    .attr('height', svgHeight)
-    .style('display', 'block');
+    .attr('viewBox', `0 0 ${svgW} ${svgH}`)
+    .style('width', '100%')
+    .style('display', 'block')
+    .style('overflow', 'visible');
 
   // Tooltip
   const tooltipSel = d3.select(container)
@@ -58,12 +74,25 @@ export function renderStreakGraph(
     seenMonths.add(month);
 
     svg.append('text')
-      .attr('x', i * STEP)
+      .attr('x', GUTTER + i * STEP)
       .attr('y', 11)
       .attr('font-size', '10px')
       .attr('fill', textColor)
       .attr('font-family', 'monospace')
       .text(month);
+  });
+
+  // Day labels (left side)
+  const cellTop = MONTH_H;
+  [1, 3, 5].forEach(dayIdx => {
+    svg.append('text')
+      .attr('x', GUTTER - 4)
+      .attr('y', dayIdx * STEP + cellTop + CELL * 0.75)
+      .attr('text-anchor', 'end')
+      .attr('font-size', '10px')
+      .attr('fill', textColor)
+      .attr('font-family', 'monospace')
+      .text(DAY_LABELS[dayIdx]);
   });
 
   // Cells
@@ -73,12 +102,12 @@ export function renderStreakGraph(
     svg.selectAll(null)
       .data(days)
       .join('rect')
-      .attr('x', weekIdx * STEP)
-      .attr('y', d => new Date(d.date + 'T12:00:00').getDay() * STEP + 16)
+      .attr('x', GUTTER + weekIdx * STEP)
+      .attr('y', d => new Date(d.date + 'T12:00:00').getDay() * STEP + cellTop)
       .attr('width', CELL)
       .attr('height', CELL)
       .attr('rx', 2)
-      .attr('fill', d => COLORS[d.level])
+      .attr('fill', d => colors[d.level])
       .style('cursor', 'crosshair')
       .on('mouseover', function(event: MouseEvent, d: Contribution) {
         const fmt = new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', {
@@ -97,16 +126,35 @@ export function renderStreakGraph(
       .on('mouseout', () => tooltipSel.style('opacity', '0'));
   });
 
-  // Day labels
-  [1, 3, 5].forEach(dayIdx => {
-    svg.append('text')
-      .attr('x', weeks.length * STEP + 4)
-      .attr('y', dayIdx * STEP + 16 + CELL * 0.75)
-      .attr('font-size', '10px')
-      .attr('fill', textColor)
-      .attr('font-family', 'monospace')
-      .text(DAY_LABELS[dayIdx]);
+  // Legend
+  const legendX = svgW - 175;
+  const legendY = 7 * STEP + MONTH_H + 6;
+
+  svg.append('text')
+    .attr('x', legendX)
+    .attr('y', legendY + 9)
+    .attr('font-size', '10px')
+    .attr('fill', textColor)
+    .attr('font-family', 'monospace')
+    .text(LEGEND_LABELS[0]);
+
+  colors.forEach((c, i) => {
+    svg.append('rect')
+      .attr('x', legendX + 34 + i * (CELL + GAP))
+      .attr('y', legendY)
+      .attr('width', CELL)
+      .attr('height', CELL)
+      .attr('rx', 2)
+      .attr('fill', c);
   });
+
+  svg.append('text')
+    .attr('x', legendX + 34 + colors.length * (CELL + GAP) + 2)
+    .attr('y', legendY + 9)
+    .attr('font-size', '10px')
+    .attr('fill', textColor)
+    .attr('font-family', 'monospace')
+    .text(LEGEND_LABELS[1]);
 
   // Streak count
   const sorted = [...contributions].sort(
